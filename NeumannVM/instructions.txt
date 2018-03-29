@@ -1,0 +1,50 @@
+add dest_addr src_addr (код 0 <dest_addr> <src_addr>)
+Складывает числа в этих регистрах и записывает результат в dest_addr
+
+sub dest_addr src_addr (код 1 <dest_addr> <src_addr>)
+Вычетает из значения в регистре dest_addr значение в регистре src_addr и записывает результат в dest_addr
+
+mov dest_addr src_addr (код 2 dest_addr src_addr)
+Помещает значение в регистре src_addr в регистр dest_addr
+
+fill addr value (код 3 <addr> <value>)
+Помещает значение value в регистр addr
+
+read addr (код 4 0 <addr>)
+Пользовательский ввод значения в регистр addr
+
+priny addr (код 5 0 <addr>)
+Вывод значения в регистре addr
+
+push value (код 6 0 <value>)
+Добавляет в стек число value
+
+pop (код 7 0 0)
+Перемещает SP.
+
+top addr (код 8 0 <addr>)
+Помещает значение верхушки стека в регистр addr
+
+fbeg clue (код 9 0 <clue>)
+Начало объявления функции
+
+fend (код 10 0 0)
+Конец объявления функции
+
+call clue (код 11 0 <clue>)
+Вызов функции clue
+
+stop (код 12 0 0)
+Выход из программы
+
+goto addr/0 offset (код 13  <addr/0> <offset>)
+Если передаётся вторым аргументом ноль или регистр, значение в котором равно нулю, то перемещает IP на offset
+
+pushreg addr (код 13 0 <addr>)
+Добавляет в стек значение из регистра addr
+
+putchar char_num (код 14 0 <char_num>)
+Выводит символ int(char_num)
+
+putstr str
+Выводит строку (ассемблер преобразовывает эту команду в множество команд putchar для VM)

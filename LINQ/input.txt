@@ -1,0 +1,57 @@
+LINQ to Objects на примерах
+Казалось бы .NET Framework 3.5 и революционный LINQ в частности появился у разработчиков достаточно давно, но не все мои коллеги еще четко представляют, что это такое и с чем это «едят». Поэтому я решил написать эдакую вводную статью для C# программистов, чтобы на наглядных примерах показать, как LINQ позволяет экономить время на рутинных вещах, таких как сортировка, аггрегация, поиск и т.д.
+Сначала давайте определимся, что речь пойдет о LINQ to Objects. LINQ to SQL, XML, Entities и т.д. в этой статье не рассматриваются, хотя я уверен, что бОльшая часть приведенных примеров будет работать и там. Помимо этого, начиная с Silverlight 2.0, LINQ to Objects доступен и там.
+LINQ to Objects подключается к проекту сборкой System.Core.dll + System.Linq namespace, реализован как набор дополнительных методов для любых классов, совместимых с интерфейсом IEnumerable<T>. IEnumerable<T> — это строго типизированный вариант аморфного IEnumerable, появившегося еще в .NET Framework 1.0. Интерфейс IEnumerable<T> реализован в таких стандартных классах, как типизированные коллекции Collection<T>, списки List<T>, уникальные списки HashSet<T>, словари Dictionary<K,V> и т.д.
+Для того, чтобы преобразовать IEnumerable (например, древний ArrayList) в IEnumerable<T>, есть две возможности:
+Cast<T> – преобразует любое перечисление в строго типизированный вариант, использую строгое преобразование типов.
+object[] values = new object[] {"1", "2", "3", "AAA", 5};
+IEnumerable<string> strings = values.Cast<string>(); // завалится c исключением на последнем элементе, поскольку он не string
+Аналог Cast<T> в SQL-похожем синтаксисе LINQ, выглядит так:
+IEnumerable<string> strings = from string x in values select x;
+OfType<T> – преобразует любое перечисление в строго типизированный вариант, используя слабое преобразование типов, т.е. пропуская элементы, не являющиеся типом T.
+object[] values = new object[] {"1", "2", "3", "AAA", 5};
+IEnumerable<string> strings = values.OfType<string>(); // последний элемент будет пропущен, поскольку он не string
+Where<T> — фильтрация по указанному критерию.
+object[] values = new object[] { "1", "2", "3", "AAA", 5, "ABB" };
+IEnumerable<string> strings = values.OfType<string>().Where(i => i.StartsWith(“A”)); // извлекаем все строки, которые начинаются на A
+First<T> и Last<T> — извлечь первый и последний элемент перечисления. Заваливаются с исключением, если перечесление не содержит элементов.
+var values = new[] {"1", "AAA", "2", "3", "ABB"};
+IEnumerable<string> strings = values.Where(i => i.StartsWith(“A”));
+string AAA = strings.First();
+string ABB = strings.Last();
+FirstOrDefault<T> и LastOrDefault<T> — извлечь первый и последний элемент перечисления. Работают даже если перечисление не содержит элементов, в этом случае возвращают default(T), что соответствует null для reference типов, 0 для числовых типов, пустым структурам для структур.
+Fist<T>, Last<T>, FirstOrDefault<T>, LastOrDefault<T> имеют дополнительный перегруженный вариант вызова, который принимает лямбда-функцию критерия для фильтрации.
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+string AAA = values.FirstOrDefault(i => i.StartsWith("A"));
+Для того, чтобы узнать, существуют ли элементы, удовлетворяющие какому-то условию, можно использовать метод Any<T>:
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+bool hasAAA = values.Any(i => i.StartsWith(“A”)); // true
+Этот же метод можно использовать для проверки перечисления на наличие элементов:
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+bool hasItems = values.Any(); // true
+Чтобы узнать, все ли элементы удовлетворяют какому-то условию, можно использовать метод All<T>:
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+bool hasAAA = values.All(i => i.StartsWith("A")); // false
+Посчитать количество элементов удовлетворяющие определенному критерию можно так:
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+int countAAA = values.Count(i => i.StartsWith("A")); // 2
+Условие можно опустить, тогда посчитаются все элементы:
+int countAll = values.Count(); // 5, понятно, что в данном случае это не самый оптимальный вариант узнать размер массива :)
+Очень удобно можно сортировать элементы с помощью OrderBy<T> и OrderByDescending<T>:
+var values = new[] { "1", "2", "3", "AAA", "ABB" };
+IEnumerable<string> strings = values.OrderBy(i => i.Length);
+Сортировать по нескольким критериям можно так:
+var values = new[] { "1", "2", "3", "AAA", "ABB", "5", "6" };
+IEnumerable<string> strings = values.OrderBy(i => i.Length).ThenBy(i => i);
+То же самое, но в SQL-подобном синтаксисе:
+IEnumerable<string> strings = from s in values order by s.Lenght, s select s;
+Удалить дубликаты из перечисления можно методом Distinct<T>:
+var values = new[] { "1", "1", "2", "2", "3", "3", "3" };
+IEnumerable<string> strings = values.Distinct(); // "1", "2", "3"
+Один из вариантов этого метода принимает Comparer<T>, т.е. можно, например, удалить дубликаты строчек без проверки на регистр:
+var values = new[] { "A", "B", "b", "C", "C", "c", "C" };
+IEnumerable<string> strings = values.Distinct(StringComparer.OrdinalIgnoreCase); // "A", "B", "C"
+Развернуть перечисление «к лесу передом»:
+var values = new[] { "A", "B", "C", "C" };
+IEnumerable<string> strings = values.Reverse(); // "C", "C", "B", "A"
+Вот вкратце некоторые примеры использования LINQ to Objects. Надеюсь, примеры достаточно красноречивы для того, чтобы возбудить ваш интерес к дальнейшему изучению и использованию LINQ to Objects…
